@@ -2,7 +2,7 @@
   "name": "Bar Ordini",
   "short_name": "Bar Ordini",
   "description": "Gestione bolle e prezzi del bar",
-  "start_url": "/",
+  "start_url": "/bar-ordini/",
   "display": "standalone",
   "background_color": "#1a1a18",
   "theme_color": "#1a1a18",
