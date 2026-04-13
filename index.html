@@ -417,7 +417,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
-const SUPABASE_URL = 'https://furbyRosa.supabase.co';
+const SUPABASE_URL = 'https://dbkmjhognkcseoqqamje.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_K5bDHDSPWJL9XYZd7hhjfQ_0JoTlK1O';
 const GEMINI_KEY = 'AIzaSyAc-4-enjl4w5Dzav9jk24OIsYW6sTEsyw';
 
@@ -540,7 +540,7 @@ Se l'immagine non e' una bolla restituisci {"errore":"non riconoscibile"}.`;
 
   try {
     const res = await fetch(
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + GEMINI_KEY,
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + GEMINI_KEY,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
