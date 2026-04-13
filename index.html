@@ -540,8 +540,8 @@ Se non riesci a leggere un campo usa null. Se non ci sono prodotti restituisci [
 Se l'immagine non e' una bolla restituisci {"errore":"non riconoscibile"}.`;
 
   try {
-    const res = await fetch(
-  'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=' + GEMINI_KEY,
+   const res = await fetch(
+  'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + GEMINI_KEY,
   {
     method: 'POST',
         headers: { 'Content-Type': 'application/json' },
