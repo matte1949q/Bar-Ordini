@@ -1,11 +1,11 @@
 {
-  "name": "Bar Ordini",
-  "short_name": "Bar Ordini",
+  "name": "FurbyRosa",
+  "short_name": "FurbyRosa",
   "description": "Gestione bolle e prezzi del bar",
-  "start_url": "/bar-ordini/",
+  "start_url": "/",
   "display": "standalone",
-  "background_color": "#1a1a18",
-  "theme_color": "#1a1a18",
+  "background_color": "#e8c4b2",
+  "theme_color": "#e8c4b2",
   "orientation": "portrait",
   "icons": [
     {
