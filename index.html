@@ -565,6 +565,7 @@ window.addEventListener('supabase-ready', initSupabase);
 let allPrezzi = [];
 let allStorico = [];
 let currentImageBase64 = null;
+let pdfPages = [];
 let currentImageMime = 'image/jpeg';
 
 async function init() {
@@ -651,39 +652,43 @@ async function handlePDF(file) {
     const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
     const totalPages = pdf.numPages;
 
-    if (totalPages === 1) {
-      const page = await pdf.getPage(1);
-      const viewport = page.getViewport({ scale: 2.0 });
+    // Store all pages as separate base64 images for multi-page analysis
+    pdfPages = [];
+    for (let i = 1; i <= totalPages; i++) {
+      const page = await pdf.getPage(i);
+      const viewport = page.getViewport({ scale: 2.5 });
       const canvas = document.createElement('canvas');
       canvas.width = viewport.width;
       canvas.height = viewport.height;
-      await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
-      compressAndShow(canvas.toDataURL('image/jpeg', 0.9));
-    } else {
-      // Multi-page: render all pages into one tall canvas
-      const pages = [];
-      let totalHeight = 0;
-      let maxWidth = 0;
-      for (let i = 1; i <= totalPages; i++) {
-        const page = await pdf.getPage(i);
-        const viewport = page.getViewport({ scale: 2.0 });
-        const canvas = document.createElement('canvas');
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
-        await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
-        pages.push(canvas);
-        totalHeight += viewport.height;
-        if (viewport.width > maxWidth) maxWidth = viewport.width;
-      }
-      const combined = document.createElement('canvas');
-      combined.width = maxWidth;
-      combined.height = totalHeight;
-      const ctx = combined.getContext('2d');
+      const ctx = canvas.getContext('2d');
       ctx.fillStyle = '#fff';
-      ctx.fillRect(0, 0, maxWidth, totalHeight);
-      let y = 0;
-      for (const p of pages) { ctx.drawImage(p, 0, y); y += p.height; }
-      compressAndShow(combined.toDataURL('image/jpeg', 0.85));
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      await page.render({ canvasContext: ctx, viewport }).promise;
+      let dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+      // Compress if too large
+      while (dataUrl.length * 0.75 > 4.5 * 1024 * 1024) {
+        const scale = Math.sqrt((4.5 * 1024 * 1024) / (dataUrl.length * 0.75));
+        const c2 = document.createElement('canvas');
+        c2.width = Math.round(canvas.width * scale);
+        c2.height = Math.round(canvas.height * scale);
+        c2.getContext('2d').drawImage(canvas, 0, 0, c2.width, c2.height);
+        dataUrl = c2.toDataURL('image/jpeg', 0.85);
+      }
+      pdfPages.push(dataUrl.split(',')[1]);
+    }
+
+    // Show first page as preview
+    currentImageBase64 = pdfPages[0];
+    currentImageMime = 'image/jpeg';
+    const firstPageImg = 'data:image/jpeg;base64,' + pdfPages[0];
+    document.getElementById('preview-img').src = firstPageImg;
+    document.getElementById('upload-area').style.display = 'none';
+    document.getElementById('preview-area').style.display = 'block';
+    document.getElementById('results-area').style.display = 'none';
+    document.getElementById('error-box').style.display = 'none';
+
+    if (totalPages > 1) {
+      document.getElementById('scan-btn').textContent = 'Analizza bolla (' + totalPages + ' pagine)';
     }
   } catch(e) {
     showError('Errore lettura PDF: ' + e.message);
@@ -705,6 +710,8 @@ function handleFile(file) {
 function resetScan() {
   currentImageBase64 = null;
   document.getElementById('file-input').value = '';
+  pdfPages = [];
+  document.getElementById('scan-btn').textContent = 'Analizza bolla';
   document.getElementById('upload-area').style.display = 'block';
   document.getElementById('preview-area').style.display = 'none';
   document.getElementById('results-area').style.display = 'none';
@@ -732,10 +739,89 @@ function setLoading(on) {
   }
 }
 
+async function analyzeOnePage(base64img) {
+  const prompt = document.querySelector('script:not([src])') ? null : null; // just to reference
+  const promptText = getPrompt();
+  const res = await fetch('https://furbyrosa.matte1949q.workers.dev/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 4000,
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: base64img } },
+          { type: 'text', text: promptText }
+        ]
+      }]
+    })
+  });
+  const data = await res.json();
+  if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+  const raw = (data.content || []).map(i => i.text || '').join('').trim().replace(/```json|```/g, '').trim();
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch(e) { return []; }
+}
+
+async function scanMultiPagePDF() {
+  try {
+    let allItems = [];
+    for (let i = 0; i < pdfPages.length; i++) {
+      document.getElementById('scan-btn').textContent = 'Analisi pagina ' + (i+1) + '/' + pdfPages.length + '...';
+      const items = await analyzeOnePage(pdfPages[i]);
+      allItems = allItems.concat(items);
+    }
+    if (allItems.length === 0) {
+      showError('Nessun prodotto trovato nel PDF.');
+      setLoading(false);
+      return;
+    }
+    await saveResults(allItems);
+    setLoading(false);
+  } catch(e) {
+    showError('Errore: ' + e.message);
+    setLoading(false);
+  }
+}
+
+function getPrompt() {
+  return `Sei un assistente per la gestione degli ordini di un bar italiano.
+Analizza questa immagine di una bolla/proforma/fattura e estrai i prodotti ordinati.
+
+REGOLE IMPORTANTI:
+1. Il fornitore e' il nome dell'azienda intestataria del documento (es. "Fine Spirits S.R.L." o "Velier S.p.A.")
+2. La colonna piu' a sinistra contiene i CODICI ARTICOLO (es. A04966, KD114, A00052, P01944). Ogni codice identifica un nuovo prodotto.
+3. Un prodotto INIZIA quando trovi un nuovo codice articolo nella colonna sinistra. Tutto il testo nelle righe successive SENZA codice appartiene al prodotto precedente e va concatenato. Esempio: KDI14 con "KILCHOMAN 100% ISLAY 14TH" e riga sotto "RELEASE 2024 50° CL 70" = nome completo "KILCHOMAN 100% ISLAY 14TH RELEASE 2024 50° CL 70".
+4. Ignora TUTTE le righe senza codice articolo che contengono: note logistiche, avvisi, numeri di telefono, date, riferimenti ordini, "CONSEGNA IN CANTINA", "PRONTA CONSEGNA", "PREAV ALMENO UN ORA PRIMA", "CONSEGNA ENTRO IL", codici numerici come 3385400345, righe che iniziano con "Promo:" o "ACTION ON TRADE" o "FEVER AD PRODUCTUM" o simili promozioni.
+5. Ignora prodotti con prezzo 0,00 o con scritta "SCONTO MERCE" nella colonna prezzo — sono omaggi senza valore commerciale.
+6. Per il prezzo usa SEMPRE il prezzo LORDO (prima dello sconto), ovvero la colonna "PREZZO" o "Valore". NON usare mai il prezzo scontato. Se vedi sia un prezzo pieno che uno scontato, prendi SEMPRE quello pieno. NON usare il totale riga.
+7. Per l'unita' usa il valore nella colonna "U.M." (BT = bottiglia, PZ = pezzo).
+8. NORMALIZZA il nome prodotto: converti tutto in MAIUSCOLO e rimuovi spazi doppi, cosi prodotti uguali su bolle diverse vengono riconosciuti come identici.
+9. Scrivi sempre "cl" in MINUSCOLO nel nome prodotto, mai "CL" o "Cl".
+10. Se la descrizione riporta misure in ml, convertile in cl dividendo per 10 e usa "cl". Esempi: 200ml = 20 cl, 500ml = 50 cl, 750ml = 75 cl, 1000ml = 100 cl. Scrivi sempre il risultato come "XX cl" (minuscolo).
+
+Rispondi SOLO con un array JSON valido, senza markdown, senza backtick, senza spiegazioni.
+Formato esatto:
+[{"fornitore":"nome fornitore","prodotto":"NOME PRODOTTO IN MAIUSCOLO","prezzo":0.00,"unita":"BT"}]
+
+Se non ci sono prodotti con codice articolo restituisci [].
+Se l'immagine non e' una bolla restituisci {"errore":"non riconoscibile"}.`;
+}
+
 async function scanImage() {
   if (!currentImageBase64) return;
   setLoading(true);
   document.getElementById('error-box').style.display = 'none';
+
+  // Multi-page PDF: analyze each page separately and merge results
+  if (pdfPages.length > 1) {
+    await scanMultiPagePDF();
+    return;
+  }
 
   const prompt = `Sei un assistente per la gestione degli ordini di un bar italiano.
 Analizza questa immagine di una bolla/proforma/fattura e estrai i prodotti ordinati.
