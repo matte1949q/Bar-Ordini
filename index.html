@@ -628,7 +628,7 @@ REGOLE IMPORTANTI:
 1. Il fornitore e' il nome dell'azienda intestataria del documento (es. "Fine Spirits S.R.L.")
 2. Estrai SOLO le righe che hanno un codice articolo nella prima colonna (es. A04966, KD114, A00052)
 3. Ignora completamente righe senza codice articolo (note, descrizioni generali, avvisi come "CONSEGNA IN CANTINA")
-4. Per il nome prodotto copia ESATTAMENTE il testo della colonna Descrizione, senza modificare nulla
+4. Per il nome prodotto copia LETTERALMENTE e INTEGRALMENTE il testo della colonna Descrizione, carattere per carattere, senza correggere errori, senza tradurre, senza abbreviare
 5. Per il prezzo usa il valore nella colonna "Valore" o "ValUnNe" (prezzo unitario), NON il totale
 6. Per l'unita' usa il valore nella colonna "U.M." (es. BT = bottiglia)
 
@@ -646,7 +646,7 @@ Se l'immagine non e' una bolla restituisci {"errore":"non riconoscibile"}.`;
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
+        model: 'claude-sonnet-4-6',
         max_tokens: 1000,
         messages: [{
           role: 'user',
