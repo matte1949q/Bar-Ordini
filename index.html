@@ -661,7 +661,8 @@ Se l'immagine non e' una bolla restituisci {"errore":"non riconoscibile"}.`;
     await saveResults(parsed);
     setLoading(false);
   } catch(e) {
-    showError('Errore durante l analisi. Riprova.');
+    showError('Errore: ' + e.message);
+    console.error('Scan error:', e);
     setLoading(false);
   }
 }
