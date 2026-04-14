@@ -502,14 +502,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <div class="toast" id="toast"></div>
 
-<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+window._supabaseCreateClient = createClient;
+window.dispatchEvent(new Event('supabase-ready'));
+</script>
 <script>
 const SUPABASE_URL = 'https://dbkmjhognkcseoqqamje.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_K5bDHDSPWJL9XYZd7hhjfQ_0JoTlK1O';
 const ANTHROPIC_KEY = 'INSERISCI_QUI_LA_TUA_CHIAVE';
 
-const { createClient } = supabase;
-const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+let db;
+function initSupabase() {
+  db = window._supabaseCreateClient(SUPABASE_URL, SUPABASE_KEY);
+  init();
+}
+window.addEventListener('supabase-ready', initSupabase);
 
 let allPrezzi = [];
 let allStorico = [];
@@ -829,7 +837,6 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove('show'), 2500);
 }
 
-init();
 
 
 </script>
