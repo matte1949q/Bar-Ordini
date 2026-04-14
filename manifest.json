@@ -2,7 +2,7 @@
   "name": "FurbyRosa",
   "short_name": "FurbyRosa",
   "description": "Gestione bolle e prezzi del bar",
-  "start_url": "/Bar-Ordini/",
+  "start_url": "/bar-ordini/",
   "display": "standalone",
   "background_color": "#e8c4b2",
   "theme_color": "#e8c4b2",
