@@ -686,7 +686,7 @@ REGOLE IMPORTANTI:
 1. Il fornitore e' il nome dell'azienda intestataria del documento (es. "Fine Spirits S.R.L.")
 2. La colonna piu' a sinistra contiene i CODICI ARTICOLO (es. A04966, KD114, A00052, P01944). Ogni codice identifica un nuovo prodotto.
 3. Un prodotto INIZIA quando trovi un nuovo codice articolo nella colonna sinistra. Tutto il testo nelle righe successive SENZA codice appartiene al prodotto precedente e va concatenato. Esempio: KDI14 con "KILCHOMAN 100% ISLAY 14TH" e riga sotto "RELEASE 2024 50° CL 70" = nome completo "KILCHOMAN 100% ISLAY 14TH RELEASE 2024 50° CL 70".
-4. Ignora TUTTE le righe senza codice articolo che contengono: note logistiche, avvisi, numeri di telefono, date, riferimenti ordini, "CONSEGNA IN CANTINA", "PRONTA CONSEGNA", "PREAV ALMENO UN ORA PRIMA", "CONSEGNA ENTRO IL", codici numerici come 3385400345.
+4. Ignora TUTTE le righe senza codice articolo che contengono: note logistiche, avvisi, numeri di telefono, date, riferimenti ordini, "CONSEGNA IN CANTINA", "PRONTA CONSEGNA", "PREAV ALMENO UN ORA PRIMA", "CONSEGNA ENTRO IL", codici numerici come 3385400345, righe che iniziano con "Promo:" o "ACTION ON TRADE" o "FEVER AD PRODUCTUM" o simili promozioni.
 5. Ignora prodotti con prezzo 0,00 o con scritta "SCONTO MERCE" nella colonna prezzo — sono omaggi senza valore commerciale.
 6. Per il prezzo usa SEMPRE il prezzo LORDO (prima dello sconto), ovvero la colonna "PREZZO" o "Valore" o "ValUnNe". NON usare mai il prezzo scontato (colonna "ValUnNe" o "SCONTO" o valori ridotti). Se vedi sia un prezzo pieno che uno scontato, prendi SEMPRE quello pieno. NON usare il totale riga.
 7. Per l'unita' usa il valore nella colonna "U.M." (BT = bottiglia, PZ = pezzo).
