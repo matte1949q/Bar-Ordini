@@ -296,9 +296,74 @@
     .section-header-title { font-size: 13px; font-weight: 500; color: var(--text2); }
 
     input[type="file"] { display: none; }
+
+    .lock-screen {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+      padding: 40px 24px;
+    }
+    .lock-logo {
+      font-family: 'DM Mono', monospace;
+      font-size: 28px;
+      font-weight: 500;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+    .lock-logo span { color: var(--text2); font-weight: 400; }
+    .lock-sub { font-size: 14px; color: var(--text2); margin-bottom: 40px; }
+    .lock-input {
+      width: 100%;
+      max-width: 300px;
+      padding: 14px 16px;
+      background: var(--bg2);
+      border: 0.5px solid var(--border2);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 16px;
+      text-align: center;
+      letter-spacing: 0.1em;
+      outline: none;
+      margin-bottom: 12px;
+    }
+    .lock-input:focus { border-color: var(--accent); }
+    .lock-btn {
+      width: 100%;
+      max-width: 300px;
+      padding: 14px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .lock-error {
+      font-size: 13px;
+      color: var(--red);
+      margin-top: 10px;
+      min-height: 20px;
+    }
   </style>
 </head>
 <body>
+
+
+<div class="lock-screen" id="lock-screen">
+  <div class="lock-logo">Furby<span>Rosa</span></div>
+  <div class="lock-sub">Accesso riservato al personale</div>
+  <input type="password" class="lock-input" id="lock-input" placeholder="Password" onkeydown="if(event.key==='Enter')checkPassword()">
+  <button class="lock-btn" onclick="checkPassword()">Entra</button>
+  <div class="lock-error" id="lock-error"></div>
+</div>
 
 <header>
   <div class="logo">Furby<span>Rosa</span></div>
@@ -416,11 +481,11 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 const SUPABASE_URL = 'https://dbkmjhognkcseoqqamje.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_K5bDHDSPWJL9XYZd7hhjfQ_0JoTlK1O';
-const GEMINI_KEY = 'AIzaSyAc-4-enjl4w5Dzav9jk24OIsYW6sTEsyw';
+const ANTHROPIC_KEY = 'INSERISCI_QUI_LA_TUA_CHIAVE';
 
 const { createClient } = supabase;
 const db = createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -540,25 +605,29 @@ Se non riesci a leggere un campo usa null. Se non ci sono prodotti restituisci [
 Se l'immagine non e' una bolla restituisci {"errore":"non riconoscibile"}.`;
 
   try {
-   const res = await fetch(
-  'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=' + GEMINI_KEY,
-  {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{
-        parts: [
-          { inline_data: { mime_type: currentImageMime, data: currentImageBase64 } },
-          { text: prompt }
-        ]
-      }],
-      generationConfig: { temperature: 0.1 }
-    })
-  }
-);
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': ANTHROPIC_KEY,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1000,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: currentImageMime, data: currentImageBase64 } },
+            { type: 'text', text: prompt }
+          ]
+        }]
+      })
+    });
 
     const data = await res.json();
-    const raw = (data.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('').trim().replace(/```json|```/g, '').trim();
+    const raw = (data.content || []).map(i => i.text || '').join('').trim().replace(/```json|```/g, '').trim();
     const parsed = JSON.parse(raw);
 
     if (parsed.errore) { showError("L'immagine non sembra una bolla. Riprova con un'altra foto."); setLoading(false); return; }
@@ -740,6 +809,26 @@ function showToast(msg) {
 }
 
 init();
+
+const APP_PASSWORD = 'furby2024';
+
+function checkPassword() {
+  const val = document.getElementById('lock-input').value;
+  if (val === APP_PASSWORD) {
+    document.getElementById('lock-screen').style.display = 'none';
+    sessionStorage.setItem('auth', '1');
+  } else {
+    document.getElementById('lock-error').textContent = 'Password errata. Riprova.';
+    document.getElementById('lock-input').value = '';
+    document.getElementById('lock-input').focus();
+  }
+}
+
+// Check if already authenticated this session
+if (sessionStorage.getItem('auth') === '1') {
+  document.getElementById('lock-screen').style.display = 'none';
+}
+
 </script>
 </body>
 </html>
