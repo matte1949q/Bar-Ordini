@@ -638,7 +638,7 @@ Analizza questa immagine di una bolla/proforma/fattura e estrai i prodotti ordin
 REGOLE IMPORTANTI:
 1. Il fornitore e' il nome dell'azienda intestataria del documento (es. "Fine Spirits S.R.L.")
 2. La colonna piu' a sinistra contiene i CODICI ARTICOLO (es. A04966, KD114, A00052). Ogni codice identifica un nuovo prodotto.
-3. Un prodotto INIZIA quando trovi un nuovo codice articolo nella colonna sinistra. Tutto il testo nelle righe successive SENZA codice articolo appartiene ancora al prodotto precedente e fa parte della sua descrizione completa.
+3. Un prodotto INIZIA quando trovi un nuovo codice articolo nella colonna piu' a sinistra (es. A00052, KDI14, A01154). Tutto il testo nelle righe immediatamente successive che NON hanno un codice articolo nella colonna sinistra appartiene SEMPRE al prodotto precedente e va concatenato alla sua descrizione. Un nuovo prodotto inizia SOLO quando appare un nuovo codice nella colonna sinistra. Esempio: KDI14 ha descrizione "KILCHOMAN 100% ISLAY 14TH" sulla prima riga e "RELEASE 2024 50° CL 70" sulla riga sotto senza codice — il nome completo e' "KILCHOMAN 100% ISLAY 14TH RELEASE 2024 50° CL 70".
 4. Unisci TUTTE le righe di descrizione di uno stesso prodotto in un unico nome completo, separate da uno spazio.
 5. Ignora righe senza codice articolo che contengono note logistiche come "CONSEGNA IN CANTINA", "PRONTA CONSEGNA" o simili - queste non appartengono a nessun prodotto.
 6. Per il nome prodotto copia LETTERALMENTE il testo della colonna Descrizione, carattere per carattere, senza correggere errori, senza tradurre, senza abbreviare. Rispetta maiuscole e minuscole esattamente come scritto.
