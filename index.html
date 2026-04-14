@@ -611,15 +611,35 @@ function showPage(name) {
 
 function handleFile(file) {
   if (!file) return;
-  currentImageMime = file.type || 'image/jpeg';
+  currentImageMime = 'image/jpeg';
   const reader = new FileReader();
   reader.onload = e => {
-    currentImageBase64 = e.target.result.split(',')[1];
-    document.getElementById('preview-img').src = e.target.result;
-    document.getElementById('upload-area').style.display = 'none';
-    document.getElementById('preview-area').style.display = 'block';
-    document.getElementById('results-area').style.display = 'none';
-    document.getElementById('error-box').style.display = 'none';
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      let w = img.width, h = img.height;
+      const maxDim = 2000;
+      if (w > maxDim || h > maxDim) {
+        if (w > h) { h = Math.round(h * maxDim / w); w = maxDim; }
+        else { w = Math.round(w * maxDim / h); h = maxDim; }
+      }
+      canvas.width = w;
+      canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      let quality = 0.85;
+      let dataUrl = canvas.toDataURL('image/jpeg', quality);
+      while (dataUrl.length * 0.75 > 4.5 * 1024 * 1024 && quality > 0.4) {
+        quality -= 0.1;
+        dataUrl = canvas.toDataURL('image/jpeg', quality);
+      }
+      currentImageBase64 = dataUrl.split(',')[1];
+      document.getElementById('preview-img').src = dataUrl;
+      document.getElementById('upload-area').style.display = 'none';
+      document.getElementById('preview-area').style.display = 'block';
+      document.getElementById('results-area').style.display = 'none';
+      document.getElementById('error-box').style.display = 'none';
+    };
+    img.src = e.target.result;
   };
   reader.readAsDataURL(file);
 }
