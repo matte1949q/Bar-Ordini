@@ -353,6 +353,27 @@
       min-height: 20px;
     }
   </style>
+<script>
+const APP_PASSWORD = 'furby2024';
+
+function checkPassword() {
+  const val = document.getElementById('lock-input').value;
+  if (val === APP_PASSWORD) {
+    document.getElementById('lock-screen').style.display = 'none';
+    sessionStorage.setItem('auth', '1');
+  } else {
+    document.getElementById('lock-error').textContent = 'Password errata. Riprova.';
+    document.getElementById('lock-input').value = '';
+    document.getElementById('lock-input').focus();
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  if (sessionStorage.getItem('auth') === '1') {
+    document.getElementById('lock-screen').style.display = 'none';
+  }
+});
+</script>
 </head>
 <body>
 
@@ -810,24 +831,6 @@ function showToast(msg) {
 
 init();
 
-const APP_PASSWORD = 'furby2024';
-
-function checkPassword() {
-  const val = document.getElementById('lock-input').value;
-  if (val === APP_PASSWORD) {
-    document.getElementById('lock-screen').style.display = 'none';
-    sessionStorage.setItem('auth', '1');
-  } else {
-    document.getElementById('lock-error').textContent = 'Password errata. Riprova.';
-    document.getElementById('lock-input').value = '';
-    document.getElementById('lock-input').focus();
-  }
-}
-
-// Check if already authenticated this session
-if (sessionStorage.getItem('auth') === '1') {
-  document.getElementById('lock-screen').style.display = 'none';
-}
 
 </script>
 </body>
