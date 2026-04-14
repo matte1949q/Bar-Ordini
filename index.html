@@ -455,6 +455,35 @@
     }
     .pct-up { background: var(--red-bg); color: var(--red); }
     .pct-down { background: var(--green-bg); color: var(--green); }
+
+    .ctx-menu {
+      position: fixed;
+      background: var(--bg2);
+      border: 0.5px solid var(--border2);
+      border-radius: var(--radius);
+      padding: 6px;
+      z-index: 300;
+      min-width: 180px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    }
+    .ctx-item {
+      padding: 11px 14px;
+      font-size: 14px;
+      color: var(--text);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .ctx-item:hover { background: var(--bg3); }
+    .ctx-title {
+      font-size: 11px;
+      color: var(--text3);
+      padding: 6px 14px 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
   </style>
 <script>
 const APP_PASSWORD = 'furby2024';
@@ -623,6 +652,18 @@ document.addEventListener('DOMContentLoaded', function() {
         <button style="display:block;width:100%;padding:16px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:16px;font-weight:500;margin-top:14px;cursor:pointer;" onclick="confirmReview()">OK — Salva</button>
       <button style="display:block;width:100%;padding:12px;background:none;border:none;color:var(--text2);font-family:'DM Sans',sans-serif;font-size:14px;margin-top:6px;cursor:pointer;" onclick="closeReview()">Annulla</button>
       </div>
+    </div>
+  </div>
+
+  <div class="ctx-menu" id="ctx-menu" style="display:none;">
+    <div class="ctx-title" id="ctx-product-name"></div>
+    <div class="ctx-item" id="ctx-move-btn" onclick="moveCategory()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      <span id="ctx-move-label">Sposta in Vini</span>
+    </div>
+    <div class="ctx-item" onclick="closeCtxMenu()" style="color:var(--text3);">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      Annulla
     </div>
   </div>
 </main>
@@ -919,8 +960,8 @@ Formato esatto:
 [{"fornitore":"nome fornitore","prodotto":"NOME PRODOTTO IN MAIUSCOLO","prezzo":0.00,"unita":"BT","categoria":"distillati"}]
 
 Per la categoria usa SOLO uno di questi due valori:
-- "distillati": rum, gin, vodka, whisky, whiskey, bourbon, tequila, mezcal, cognac, armagnac, calvados, grappa, marc, acquavite, brandy, amaro, bitter, liquore, aperitivo, vermouth, porto, sherry, marsala, sake, baijiu, pisco, cachaça, rhum, eau de vie, fernet, sambuca, limoncello, triple sec, curacao, cointreau, chartreuse, benedettine, campari, aperol, spritz, bitters, angostura, bibite, tonic, soda, ginger, fever-tree, schweppes, succhi, energy drink, birra, acque
-- "vini": vino, wine, prosecco, champagne, cava, spumante, frizzante, bollicine, rosso, bianco, rosé, rose, barolo, barbaresco, brunello, chianti, amarone, ripasso, primitivo, nero d'avola, vermentino, greco, fiano, pinot, chardonnay, sauvignon, riesling, gewurztraminer, moscato, passito, sciacchetrà, recioto, sforzato, vinsanto, muffato, ribolla, malvasia, pecorino, trebbiano, sangiovese, nebbiolo, barbera, dolcetto, montepulciano, aglianico, nerello, etna, sicilia, toscana, piemonte, veneto, friuli, alto adige, borgogna, bordeaux, loire, alsazia, rhone, rioja, ribera
+- "distillati": rum, gin, vodka, whisky, whiskey, bourbon, tequila, mezcal, cognac, armagnac, calvados, grappa, marc, acquavite, brandy, amaro, bitter, liquore, aperitivo, vermouth, martini, cinzano, carpano, punt e mes, porto, sherry, marsala, sake, baijiu, pisco, cachaça, rhum, eau de vie, fernet, sambuca, limoncello, triple sec, curacao, cointreau, chartreuse, benedettine, campari, aperol, spritz, bitters, angostura, bibite, tonic, soda, ginger, fever-tree, schweppes, succhi, energy drink, birra, acque
+- "vini": vino, wine, prosecco, champagne, cava, spumante, frizzante, bollicine, rosso, bianco, rosé, rose, barolo, barbaresco, brunello, chianti, amarone, ripasso, primitivo, nero d'avola, vermentino, greco, fiano, pinot, chardonnay, sauvignon, riesling, gewurztraminer, moscato, passito, sciacchetrà, recioto, sforzato, vinsanto, muffato, ribolla, malvasia, pecorino, trebbiano, sangiovese, nebbiolo, barbera, dolcetto, montepulciano, aglianico, nerello, etna, sicilia, toscana, piemonte, veneto, friuli, alto adige, borgogna, bordeaux, loire, alsazia, rhone, rioja, ribera. NOTA: vermouth, porto, sherry, marsala NON sono vini — classificali sempre come distillati
 
 Se non ci sono prodotti con codice articolo restituisci [].
 Se l'immagine non e' una bolla restituisci {"errore":"non riconoscibile"}.`;
@@ -958,8 +999,8 @@ Formato esatto:
 [{"fornitore":"nome fornitore","prodotto":"NOME PRODOTTO IN MAIUSCOLO","prezzo":0.00,"unita":"BT","categoria":"distillati"}]
 
 Per la categoria usa SOLO uno di questi due valori:
-- "distillati": rum, gin, vodka, whisky, whiskey, bourbon, tequila, mezcal, cognac, armagnac, calvados, grappa, marc, acquavite, brandy, amaro, bitter, liquore, aperitivo, vermouth, porto, sherry, marsala, sake, baijiu, pisco, cachaça, rhum, eau de vie, fernet, sambuca, limoncello, triple sec, curacao, cointreau, chartreuse, benedettine, campari, aperol, spritz, bitters, angostura, bibite, tonic, soda, ginger, fever-tree, schweppes, succhi, energy drink, birra, acque
-- "vini": vino, wine, prosecco, champagne, cava, spumante, frizzante, bollicine, rosso, bianco, rosé, rose, barolo, barbaresco, brunello, chianti, amarone, ripasso, primitivo, nero d'avola, vermentino, greco, fiano, pinot, chardonnay, sauvignon, riesling, gewurztraminer, moscato, passito, sciacchetrà, recioto, sforzato, vinsanto, muffato, ribolla, malvasia, pecorino, trebbiano, sangiovese, nebbiolo, barbera, dolcetto, montepulciano, aglianico, nerello, etna, sicilia, toscana, piemonte, veneto, friuli, alto adige, borgogna, bordeaux, loire, alsazia, rhone, rioja, ribera
+- "distillati": rum, gin, vodka, whisky, whiskey, bourbon, tequila, mezcal, cognac, armagnac, calvados, grappa, marc, acquavite, brandy, amaro, bitter, liquore, aperitivo, vermouth, martini, cinzano, carpano, punt e mes, porto, sherry, marsala, sake, baijiu, pisco, cachaça, rhum, eau de vie, fernet, sambuca, limoncello, triple sec, curacao, cointreau, chartreuse, benedettine, campari, aperol, spritz, bitters, angostura, bibite, tonic, soda, ginger, fever-tree, schweppes, succhi, energy drink, birra, acque
+- "vini": vino, wine, prosecco, champagne, cava, spumante, frizzante, bollicine, rosso, bianco, rosé, rose, barolo, barbaresco, brunello, chianti, amarone, ripasso, primitivo, nero d'avola, vermentino, greco, fiano, pinot, chardonnay, sauvignon, riesling, gewurztraminer, moscato, passito, sciacchetrà, recioto, sforzato, vinsanto, muffato, ribolla, malvasia, pecorino, trebbiano, sangiovese, nebbiolo, barbera, dolcetto, montepulciano, aglianico, nerello, etna, sicilia, toscana, piemonte, veneto, friuli, alto adige, borgogna, bordeaux, loire, alsazia, rhone, rioja, ribera. NOTA: vermouth, porto, sherry, marsala NON sono vini — classificali sempre come distillati
 
 Se non ci sono prodotti con codice articolo restituisci [].
 Se l'immagine non e' una bolla restituisci {"errore":"non riconoscibile"}.`;
@@ -1227,6 +1268,52 @@ async function deleteSelected() {
   }
 }
 
+let ctxProductId = null;
+let ctxProductCategoria = null;
+let longPressTimer = null;
+
+function openCtxMenu(e, id, nome, categoria) {
+  e.preventDefault();
+  ctxProductId = id;
+  ctxProductCategoria = categoria || 'distillati';
+  const dest = ctxProductCategoria === 'distillati' ? 'vini' : 'distillati';
+  const destLabel = dest === 'vini' ? 'Vini' : 'Distillati';
+  document.getElementById('ctx-product-name').textContent = nome.length > 35 ? nome.slice(0,35)+'…' : nome;
+  document.getElementById('ctx-move-label').textContent = 'Sposta in ' + destLabel;
+  const menu = document.getElementById('ctx-menu');
+  menu.style.display = 'block';
+  const rect = e.target.closest('.product-row').getBoundingClientRect();
+  const menuH = 120;
+  const top = rect.bottom + window.scrollY + 4;
+  menu.style.top = (top + menuH > window.innerHeight + window.scrollY ? rect.top + window.scrollY - menuH - 4 : top) + 'px';
+  menu.style.left = Math.min(rect.left, window.innerWidth - 196) + 'px';
+}
+
+function closeCtxMenu() {
+  document.getElementById('ctx-menu').style.display = 'none';
+  ctxProductId = null;
+}
+
+async function moveCategory() {
+  if (!ctxProductId) return;
+  const dest = ctxProductCategoria === 'distillati' ? 'vini' : 'distillati';
+  try {
+    await db.from('prezzi').update({ categoria: dest }).eq('id', ctxProductId);
+    const p = allPrezzi.find(p => p.id === ctxProductId);
+    if (p) p.categoria = dest;
+    closeCtxMenu();
+    renderPrezzi();
+    showToast('Prodotto spostato in ' + (dest === 'vini' ? 'Vini' : 'Distillati'));
+  } catch(e) {
+    showToast('Errore spostamento');
+  }
+}
+
+document.addEventListener('click', e => {
+  const menu = document.getElementById('ctx-menu');
+  if (menu && !menu.contains(e.target)) closeCtxMenu();
+});
+
 async function deleteProduct(id) {
   if (!confirm('Eliminare questo prodotto?')) return;
   try {
@@ -1265,7 +1352,11 @@ function renderPrezzi() {
     <div class="card" style="padding: 0 16px; margin-bottom:10px;">
       <div style="padding:12px 0 8px;font-size:11px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--accent);border-bottom:0.5px solid var(--border);">${fornitore}</div>
       ${prods.map(p => `
-        <div class="product-row">
+        <div class="product-row" 
+          oncontextmenu="openCtxMenu(event,${p.id},'${p.prodotto.replace(/'/g,"\\'")}','${p.categoria||'distillati'}')"
+          ontouchstart="longPressTimer=setTimeout(()=>openCtxMenu(event,${p.id},'${p.prodotto.replace(/'/g,"\\'")}','${p.categoria||'distillati'}'),600)"
+          ontouchend="clearTimeout(longPressTimer)"
+          ontouchmove="clearTimeout(longPressTimer)">
           <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
             <input type="checkbox" class="checkbox-product product-cb" data-id="${p.id}" onchange="updateSelection()">
             <div style="flex:1;">
