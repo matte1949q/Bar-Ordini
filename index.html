@@ -651,9 +651,21 @@ Se l'immagine non e' una bolla restituisci {"errore":"non riconoscibile"}.`;
       })
     });
 
-    const data = await res.json();
+    const responseText = await res.text();
+    console.log('Worker response:', responseText);
+    
+    let data;
+    try { data = JSON.parse(responseText); } catch(e) { showError('Risposta non valida dal server: ' + responseText.slice(0,100)); setLoading(false); return; }
+    
+    if (data.error) { showError('Errore server: ' + (data.error.message || data.error)); setLoading(false); return; }
+    
     const raw = (data.content || []).map(i => i.text || '').join('').trim().replace(/```json|```/g, '').trim();
-    const parsed = JSON.parse(raw);
+    console.log('Raw AI response:', raw);
+    
+    if (!raw) { showError('Risposta vuota dal modello AI.'); setLoading(false); return; }
+    
+    let parsed;
+    try { parsed = JSON.parse(raw); } catch(e) { showError('Formato risposta non valido: ' + raw.slice(0,100)); setLoading(false); return; }
 
     if (parsed.errore) { showError("L'immagine non sembra una bolla. Riprova con un'altra foto."); setLoading(false); return; }
     if (!Array.isArray(parsed) || parsed.length === 0) { showError('Nessun prodotto trovato. Prova con una foto piu nitida.'); setLoading(false); return; }
