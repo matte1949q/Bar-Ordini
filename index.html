@@ -622,14 +622,21 @@ async function scanImage() {
   document.getElementById('error-box').style.display = 'none';
 
   const prompt = `Sei un assistente per la gestione degli ordini di un bar italiano.
-Analizza questa immagine di una bolla/fattura/documento di consegna ed estrai TUTTI i prodotti presenti.
-Per ogni prodotto restituisci un oggetto JSON.
+Analizza questa immagine di una bolla/proforma/fattura e estrai i prodotti ordinati.
+
+REGOLE IMPORTANTI:
+1. Il fornitore e' il nome dell'azienda intestataria del documento (es. "Fine Spirits S.R.L.")
+2. Estrai SOLO le righe che hanno un codice articolo nella prima colonna (es. A04966, KD114, A00052)
+3. Ignora completamente righe senza codice articolo (note, descrizioni generali, avvisi come "CONSEGNA IN CANTINA")
+4. Per il nome prodotto copia ESATTAMENTE il testo della colonna Descrizione, senza modificare nulla
+5. Per il prezzo usa il valore nella colonna "Valore" o "ValUnNe" (prezzo unitario), NON il totale
+6. Per l'unita' usa il valore nella colonna "U.M." (es. BT = bottiglia)
 
 Rispondi SOLO con un array JSON valido, senza markdown, senza backtick, senza spiegazioni.
 Formato esatto:
-[{"fornitore":"nome fornitore","prodotto":"nome prodotto","prezzo":0.00,"unita":"bottiglia/kg/lt/pz/cassa"}]
+[{"fornitore":"nome fornitore","prodotto":"nome prodotto esatto","prezzo":0.00,"unita":"BT"}]
 
-Se non riesci a leggere un campo usa null. Se non ci sono prodotti restituisci [].
+Se non ci sono prodotti con codice articolo restituisci [].
 Se l'immagine non e' una bolla restituisci {"errore":"non riconoscibile"}.`;
 
   try {
