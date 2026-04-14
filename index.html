@@ -401,6 +401,12 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+  if (typeof pdfjsLib !== 'undefined') {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  }
+</script>
 </head>
 <body>
 
@@ -442,9 +448,9 @@ document.addEventListener('DOMContentLoaded', function() {
           </svg>
         </div>
         <div class="upload-title">Fotografa la bolla</div>
-        <div class="upload-sub">Tocca per scattare o scegli dalla galleria</div>
+        <div class="upload-sub">Tocca per scattare, scegli dalla galleria o carica un PDF</div>
       </div>
-      <input type="file" id="file-input" accept="image/*" onchange="handleFile(this.files[0])">
+      <input type="file" id="file-input" accept="image/*,application/pdf" onchange="handleFile(this.files[0])">
     </div>
 
     <div id="preview-area" style="display:none">
@@ -609,38 +615,90 @@ function showPage(name) {
   if (name === 'storico') { loadStorico(); }
 }
 
+function compressAndShow(dataUrl) {
+  const img = new Image();
+  img.onload = () => {
+    const canvas = document.createElement('canvas');
+    let w = img.width, h = img.height;
+    const maxDim = 2000;
+    if (w > maxDim || h > maxDim) {
+      if (w > h) { h = Math.round(h * maxDim / w); w = maxDim; }
+      else { w = Math.round(w * maxDim / h); h = maxDim; }
+    }
+    canvas.width = w;
+    canvas.height = h;
+    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+    let quality = 0.85;
+    let out = canvas.toDataURL('image/jpeg', quality);
+    while (out.length * 0.75 > 4.5 * 1024 * 1024 && quality > 0.4) {
+      quality -= 0.1;
+      out = canvas.toDataURL('image/jpeg', quality);
+    }
+    currentImageBase64 = out.split(',')[1];
+    currentImageMime = 'image/jpeg';
+    document.getElementById('preview-img').src = out;
+    document.getElementById('upload-area').style.display = 'none';
+    document.getElementById('preview-area').style.display = 'block';
+    document.getElementById('results-area').style.display = 'none';
+    document.getElementById('error-box').style.display = 'none';
+  };
+  img.src = dataUrl;
+}
+
+async function handlePDF(file) {
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    const totalPages = pdf.numPages;
+
+    if (totalPages === 1) {
+      const page = await pdf.getPage(1);
+      const viewport = page.getViewport({ scale: 2.0 });
+      const canvas = document.createElement('canvas');
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+      compressAndShow(canvas.toDataURL('image/jpeg', 0.9));
+    } else {
+      // Multi-page: render all pages into one tall canvas
+      const pages = [];
+      let totalHeight = 0;
+      let maxWidth = 0;
+      for (let i = 1; i <= totalPages; i++) {
+        const page = await pdf.getPage(i);
+        const viewport = page.getViewport({ scale: 2.0 });
+        const canvas = document.createElement('canvas');
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+        pages.push(canvas);
+        totalHeight += viewport.height;
+        if (viewport.width > maxWidth) maxWidth = viewport.width;
+      }
+      const combined = document.createElement('canvas');
+      combined.width = maxWidth;
+      combined.height = totalHeight;
+      const ctx = combined.getContext('2d');
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0, 0, maxWidth, totalHeight);
+      let y = 0;
+      for (const p of pages) { ctx.drawImage(p, 0, y); y += p.height; }
+      compressAndShow(combined.toDataURL('image/jpeg', 0.85));
+    }
+  } catch(e) {
+    showError('Errore lettura PDF: ' + e.message);
+  }
+}
+
 function handleFile(file) {
   if (!file) return;
+  if (file.type === 'application/pdf') {
+    handlePDF(file);
+    return;
+  }
   currentImageMime = 'image/jpeg';
   const reader = new FileReader();
-  reader.onload = e => {
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      let w = img.width, h = img.height;
-      const maxDim = 2000;
-      if (w > maxDim || h > maxDim) {
-        if (w > h) { h = Math.round(h * maxDim / w); w = maxDim; }
-        else { w = Math.round(w * maxDim / h); h = maxDim; }
-      }
-      canvas.width = w;
-      canvas.height = h;
-      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-      let quality = 0.85;
-      let dataUrl = canvas.toDataURL('image/jpeg', quality);
-      while (dataUrl.length * 0.75 > 4.5 * 1024 * 1024 && quality > 0.4) {
-        quality -= 0.1;
-        dataUrl = canvas.toDataURL('image/jpeg', quality);
-      }
-      currentImageBase64 = dataUrl.split(',')[1];
-      document.getElementById('preview-img').src = dataUrl;
-      document.getElementById('upload-area').style.display = 'none';
-      document.getElementById('preview-area').style.display = 'block';
-      document.getElementById('results-area').style.display = 'none';
-      document.getElementById('error-box').style.display = 'none';
-    };
-    img.src = e.target.result;
-  };
+  reader.onload = e => compressAndShow(e.target.result);
   reader.readAsDataURL(file);
 }
 
