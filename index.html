@@ -505,7 +505,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <nav>
   <button class="active" onclick="showPage('scan')">Scansiona</button>
-  <button onclick="showPage('prezzi')">Prezzi</button>
+  <button onclick="showPage('prezzi')">Inventario</button>
   <button onclick="showPage('storico')">Storico</button>
 </nav>
 
@@ -565,15 +565,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
   <!-- PREZZI PAGE -->
   <div class="page" id="page-prezzi">
-    <div class="stat-grid">
-      <div class="stat-card">
-        <div class="stat-label">Prodotti</div>
-        <div class="stat-value" id="stat-prodotti">—</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Fornitori</div>
-        <div class="stat-value" id="stat-fornitori">—</div>
-      </div>
+    <div style="display:flex;gap:8px;margin-bottom:14px;">
+      <button id="filter-tutti" onclick="setFilter('tutti')" style="flex:1;padding:10px;border-radius:var(--radius-sm);border:1.5px solid var(--accent);background:var(--accent);color:#fff;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;">Tutti</button>
+      <button id="filter-distillati" onclick="setFilter('distillati')" style="flex:1;padding:10px;border-radius:var(--radius-sm);border:1.5px solid var(--border2);background:none;color:var(--text2);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;">Distillati</button>
+      <button id="filter-vini" onclick="setFilter('vini')" style="flex:1;padding:10px;border-radius:var(--radius-sm);border:1.5px solid var(--border2);background:none;color:var(--text2);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;">Vini</button>
     </div>
 
     <div class="search-wrap">
@@ -582,7 +577,7 @@ document.addEventListener('DOMContentLoaded', function() {
       </svg>
       <input type="text" class="search-input" id="search-input" placeholder="Cerca prodotto o fornitore…" oninput="renderPrezzi()">
     </div>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;" id="select-bar" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text2);cursor:pointer;">
         <input type="checkbox" id="select-all-cb" class="checkbox-product" onchange="toggleSelectAll(this.checked)"> Seleziona tutti
       </label>
@@ -678,6 +673,7 @@ window.addEventListener('supabase-ready', initSupabase);
 let allPrezzi = [];
 let allStorico = [];
 let currentImageBase64 = null;
+let currentFilter = 'tutti';
 let pdfPages = [];
 let currentImageMime = 'image/jpeg';
 
@@ -920,7 +916,11 @@ REGOLE IMPORTANTI:
 
 Rispondi SOLO con un array JSON valido, senza markdown, senza backtick, senza spiegazioni.
 Formato esatto:
-[{"fornitore":"nome fornitore","prodotto":"NOME PRODOTTO IN MAIUSCOLO","prezzo":0.00,"unita":"BT"}]
+[{"fornitore":"nome fornitore","prodotto":"NOME PRODOTTO IN MAIUSCOLO","prezzo":0.00,"unita":"BT","categoria":"distillati"}]
+
+Per la categoria usa SOLO uno di questi due valori:
+- "distillati": rum, gin, vodka, whisky, whiskey, bourbon, tequila, mezcal, cognac, armagnac, calvados, grappa, marc, acquavite, brandy, amaro, bitter, liquore, aperitivo, vermouth, porto, sherry, marsala, sake, baijiu, pisco, cachaça, rhum, eau de vie, fernet, sambuca, limoncello, triple sec, curacao, cointreau, chartreuse, benedettine, campari, aperol, spritz, bitters, angostura, bibite, tonic, soda, ginger, fever-tree, schweppes, succhi, energy drink, birra, acque
+- "vini": vino, wine, prosecco, champagne, cava, spumante, frizzante, bollicine, rosso, bianco, rosé, rose, barolo, barbaresco, brunello, chianti, amarone, ripasso, primitivo, nero d'avola, vermentino, greco, fiano, pinot, chardonnay, sauvignon, riesling, gewurztraminer, moscato, passito, sciacchetrà, recioto, sforzato, vinsanto, muffato, ribolla, malvasia, pecorino, trebbiano, sangiovese, nebbiolo, barbera, dolcetto, montepulciano, aglianico, nerello, etna, sicilia, toscana, piemonte, veneto, friuli, alto adige, borgogna, bordeaux, loire, alsazia, rhone, rioja, ribera
 
 Se non ci sono prodotti con codice articolo restituisci [].
 Se l'immagine non e' una bolla restituisci {"errore":"non riconoscibile"}.`;
@@ -955,7 +955,11 @@ REGOLE IMPORTANTI:
 
 Rispondi SOLO con un array JSON valido, senza markdown, senza backtick, senza spiegazioni.
 Formato esatto:
-[{"fornitore":"nome fornitore","prodotto":"NOME PRODOTTO IN MAIUSCOLO","prezzo":0.00,"unita":"BT"}]
+[{"fornitore":"nome fornitore","prodotto":"NOME PRODOTTO IN MAIUSCOLO","prezzo":0.00,"unita":"BT","categoria":"distillati"}]
+
+Per la categoria usa SOLO uno di questi due valori:
+- "distillati": rum, gin, vodka, whisky, whiskey, bourbon, tequila, mezcal, cognac, armagnac, calvados, grappa, marc, acquavite, brandy, amaro, bitter, liquore, aperitivo, vermouth, porto, sherry, marsala, sake, baijiu, pisco, cachaça, rhum, eau de vie, fernet, sambuca, limoncello, triple sec, curacao, cointreau, chartreuse, benedettine, campari, aperol, spritz, bitters, angostura, bibite, tonic, soda, ginger, fever-tree, schweppes, succhi, energy drink, birra, acque
+- "vini": vino, wine, prosecco, champagne, cava, spumante, frizzante, bollicine, rosso, bianco, rosé, rose, barolo, barbaresco, brunello, chianti, amarone, ripasso, primitivo, nero d'avola, vermentino, greco, fiano, pinot, chardonnay, sauvignon, riesling, gewurztraminer, moscato, passito, sciacchetrà, recioto, sforzato, vinsanto, muffato, ribolla, malvasia, pecorino, trebbiano, sangiovese, nebbiolo, barbera, dolcetto, montepulciano, aglianico, nerello, etna, sicilia, toscana, piemonte, veneto, friuli, alto adige, borgogna, bordeaux, loire, alsazia, rhone, rioja, ribera
 
 Se non ci sono prodotti con codice articolo restituisci [].
 Se l'immagine non e' una bolla restituisci {"errore":"non riconoscibile"}.`;
@@ -1156,6 +1160,7 @@ async function doSave(statuses) {
         fornitore: item.fornitore || null,
         prezzo: item.prezzo,
         unita: item.unita || null,
+        categoria: item.categoria || 'distillati',
         updated_at: now
       };
       await db.from('prezzi').upsert(upsertData, { onConflict: 'prodotto,fornitore' });
@@ -1238,9 +1243,11 @@ async function deleteProduct(id) {
 function renderPrezzi() {
   const q = (document.getElementById('search-input').value || '').toLowerCase();
   const list = document.getElementById('prezzi-list');
-  const filtered = allPrezzi.filter(p =>
-    !q || (p.prodotto || '').toLowerCase().includes(q) || (p.fornitore || '').toLowerCase().includes(q)
-  );
+  const filtered = allPrezzi.filter(p => {
+    const matchQ = !q || (p.prodotto || '').toLowerCase().includes(q) || (p.fornitore || '').toLowerCase().includes(q);
+    const matchCat = currentFilter === 'tutti' || (p.categoria || 'distillati') === currentFilter;
+    return matchQ && matchCat;
+  });
 
   if (filtered.length === 0) {
     list.innerHTML = '<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>' + (q ? 'Nessun risultato.' : 'Nessun prodotto ancora.') + '</div>';
@@ -1331,6 +1338,24 @@ function renderStorico() {
       </div>
     `;
   }).join('');
+}
+
+function setFilter(f) {
+  currentFilter = f;
+  ['tutti','distillati','vini'].forEach(name => {
+    const btn = document.getElementById('filter-' + name);
+    if (!btn) return;
+    if (name === f) {
+      btn.style.background = 'var(--accent)';
+      btn.style.color = '#fff';
+      btn.style.borderColor = 'var(--accent)';
+    } else {
+      btn.style.background = 'none';
+      btn.style.color = 'var(--text2)';
+      btn.style.borderColor = 'var(--border2)';
+    }
+  });
+  renderPrezzi();
 }
 
 function updateStats() {
