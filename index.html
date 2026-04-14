@@ -688,7 +688,7 @@ REGOLE IMPORTANTI:
 3. Un prodotto INIZIA quando trovi un nuovo codice articolo nella colonna sinistra. Tutto il testo nelle righe successive SENZA codice appartiene al prodotto precedente e va concatenato. Esempio: KDI14 con "KILCHOMAN 100% ISLAY 14TH" e riga sotto "RELEASE 2024 50° CL 70" = nome completo "KILCHOMAN 100% ISLAY 14TH RELEASE 2024 50° CL 70".
 4. Ignora TUTTE le righe senza codice articolo che contengono: note logistiche, avvisi, numeri di telefono, date, riferimenti ordini, "CONSEGNA IN CANTINA", "PRONTA CONSEGNA", "PREAV ALMENO UN ORA PRIMA", "CONSEGNA ENTRO IL", codici numerici come 3385400345.
 5. Ignora prodotti con prezzo 0,00 o con scritta "SCONTO MERCE" nella colonna prezzo — sono omaggi senza valore commerciale.
-6. Per il prezzo cerca la colonna "PREZZO" o "Valore" o "ValUnNe" — e' sempre il prezzo UNITARIO per bottiglia/pezzo, NON il totale riga.
+6. Per il prezzo usa SEMPRE il prezzo LORDO (prima dello sconto), ovvero la colonna "PREZZO" o "Valore" o "ValUnNe". NON usare mai il prezzo scontato (colonna "ValUnNe" o "SCONTO" o valori ridotti). Se vedi sia un prezzo pieno che uno scontato, prendi SEMPRE quello pieno. NON usare il totale riga.
 7. Per l'unita' usa il valore nella colonna "U.M." (BT = bottiglia, PZ = pezzo).
 8. NORMALIZZA il nome prodotto: converti tutto in MAIUSCOLO e rimuovi spazi doppi, cosi prodotti uguali su bolle diverse vengono riconosciuti come identici.
 
@@ -921,6 +921,18 @@ function renderPrezzi() {
   `).join('');
 }
 
+async function deleteStorico(id) {
+  if (!confirm('Eliminare questa scansione dallo storico?')) return;
+  try {
+    await db.from('storico').delete().eq('id', id);
+    allStorico = allStorico.filter(s => s.id !== id);
+    renderStorico();
+    showToast('Scansione eliminata');
+  } catch(e) {
+    showToast('Errore eliminazione');
+  }
+}
+
 function renderStorico() {
   const list = document.getElementById('storico-list');
   if (!allStorico.length) {
@@ -937,13 +949,20 @@ function renderStorico() {
     return `
       <div class="card">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
-          <div>
+          <div style="flex:1;">
             <div style="font-weight:500;font-size:15px;">${dateStr}</div>
             <div style="font-size:12px;color:var(--text3);">${timeStr}</div>
           </div>
-          <div style="text-align:right;">
-            <div class="mono" style="font-size:16px;color:var(--accent);">${s.n_prodotti || items.length}</div>
-            <div style="font-size:11px;color:var(--text3);">prodotti</div>
+          <div style="display:flex;align-items:flex-start;gap:12px;">
+            <div style="text-align:right;">
+              <div class="mono" style="font-size:16px;color:var(--accent);">${s.n_prodotti || items.length}</div>
+              <div style="font-size:11px;color:var(--text3);">prodotti</div>
+            </div>
+            <button class="delete-btn" onclick="deleteStorico(${s.id})" title="Elimina">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/>
+              </svg>
+            </button>
           </div>
         </div>
         ${nuovi || variati ? `<div style="display:flex;gap:6px;flex-wrap:wrap;">
