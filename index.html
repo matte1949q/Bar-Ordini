@@ -801,8 +801,9 @@ REGOLE IMPORTANTI:
 6. Per il prezzo usa SEMPRE il prezzo LORDO (prima dello sconto), ovvero la colonna "PREZZO" o "Valore". NON usare mai il prezzo scontato. Se vedi sia un prezzo pieno che uno scontato, prendi SEMPRE quello pieno. NON usare il totale riga.
 7. Per l'unita' usa il valore nella colonna "U.M." (BT = bottiglia, PZ = pezzo).
 8. NORMALIZZA il nome prodotto: converti tutto in MAIUSCOLO e rimuovi spazi doppi, cosi prodotti uguali su bolle diverse vengono riconosciuti come identici.
-9. Scrivi sempre "cl" in MINUSCOLO nel nome prodotto, mai "CL" o "Cl".
-10. Se la descrizione riporta misure in ml, convertile in cl dividendo per 10 e usa "cl". Esempi: 200ml = 20 cl, 500ml = 50 cl, 750ml = 75 cl, 1000ml = 100 cl. Scrivi sempre il risultato come "XX cl" (minuscolo).
+9. Scrivi sempre "cl" in MINUSCOLO nel nome prodotto, mai "CL" o "Cl". Metti SEMPRE "cl" PRIMA del numero: scrivi "cl 70" non "70 cl", scrivi "cl 20" non "20 cl".
+10. Se la descrizione riporta misure in ml, convertile in cl dividendo per 10. Scrivi SEMPRE cl prima del numero. Esempi: 200ml = cl 20, 500ml = cl 50, 750ml = cl 75, 1000ml = cl 100.
+11. Rimuovi dal nome prodotto le indicazioni di confezione multipla come "4X", "6X", "4x", "6x", "CLUSTER", "AST.", "(6X4)". Tieni solo la misura singola del contenitore. Esempi: "4X200 ml CLUSTER" → "20 cl", "6X4 250 ml" → "25 cl", "4x200 ml" → "20 cl".
 
 Rispondi SOLO con un array JSON valido, senza markdown, senza backtick, senza spiegazioni.
 Formato esatto:
@@ -835,8 +836,9 @@ REGOLE IMPORTANTI:
 6. Per il prezzo usa SEMPRE il prezzo LORDO (prima dello sconto), ovvero la colonna "PREZZO" o "Valore" o "ValUnNe". NON usare mai il prezzo scontato (colonna "ValUnNe" o "SCONTO" o valori ridotti). Se vedi sia un prezzo pieno che uno scontato, prendi SEMPRE quello pieno. NON usare il totale riga.
 7. Per l'unita' usa il valore nella colonna "U.M." (BT = bottiglia, PZ = pezzo).
 8. NORMALIZZA il nome prodotto: converti tutto in MAIUSCOLO e rimuovi spazi doppi, cosi prodotti uguali su bolle diverse vengono riconosciuti come identici.
-9. Scrivi sempre "cl" in MINUSCOLO nel nome prodotto, mai "CL" o "Cl".
-10. Se la descrizione riporta misure in ml, convertile in cl dividendo per 10 e usa "cl". Esempi: 200ml = 20 cl, 500ml = 50 cl, 750ml = 75 cl, 1000ml = 100 cl. Scrivi sempre il risultato come "XX cl" (minuscolo).
+9. Scrivi sempre "cl" in MINUSCOLO nel nome prodotto, mai "CL" o "Cl". Metti SEMPRE "cl" PRIMA del numero: scrivi "cl 70" non "70 cl", scrivi "cl 20" non "20 cl".
+10. Se la descrizione riporta misure in ml, convertile in cl dividendo per 10. Scrivi SEMPRE cl prima del numero. Esempi: 200ml = cl 20, 500ml = cl 50, 750ml = cl 75, 1000ml = cl 100.
+11. Rimuovi dal nome prodotto le indicazioni di confezione multipla come "4X", "6X", "4x", "6x", "CLUSTER", "AST.", "(6X4)". Tieni solo la misura singola del contenitore. Esempi: "4X200 ml CLUSTER" → "20 cl", "6X4 250 ml" → "25 cl", "4x200 ml" → "20 cl".
 
 Rispondi SOLO con un array JSON valido, senza markdown, senza backtick, senza spiegazioni.
 Formato esatto:
