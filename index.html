@@ -236,6 +236,23 @@
     .product-name { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 2px; }
     .product-meta { font-size: 12px; color: var(--text2); display: flex; justify-content: space-between; align-items: center; }
     .product-price { font-family: 'DM Mono', monospace; font-size: 14px; color: var(--accent); }
+    .checkbox-product {
+      width: 18px; height: 18px;
+      accent-color: var(--accent);
+      cursor: pointer;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .bulk-bar {
+      position: sticky;
+      bottom: 0;
+      background: var(--bg2);
+      border-top: 0.5px solid var(--border2);
+      padding: 12px 0;
+      display: none;
+      gap: 8px;
+      margin-top: 12px;
+    }
     .delete-btn {
       background: none;
       border: none;
@@ -483,6 +500,12 @@ document.addEventListener('DOMContentLoaded', function() {
       </svg>
       <input type="text" class="search-input" id="search-input" placeholder="Cerca prodotto o fornitore…" oninput="renderPrezzi()">
     </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;" id="select-bar" style="display:none">
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text2);cursor:pointer;">
+        <input type="checkbox" id="select-all-cb" class="checkbox-product" onchange="toggleSelectAll(this.checked)"> Seleziona tutti
+      </label>
+      <span id="selected-count" style="font-size:13px;color:var(--text3);"></span>
+    </div>
 
     <div id="prezzi-list">
       <div class="empty">
@@ -492,6 +515,10 @@ document.addEventListener('DOMContentLoaded', function() {
         </svg>
         Nessun prodotto ancora. Scansiona una bolla per iniziare.
       </div>
+    </div>
+  <div class="bulk-bar" id="bulk-bar">
+      <button class="btn btn-secondary" onclick="deleteSelected()" style="background:var(--red-bg);color:var(--red);border-color:rgba(192,57,43,0.3);">Elimina selezionati</button>
+      <button class="btn btn-secondary" onclick="clearSelection()">Annulla</button>
     </div>
   </div>
 
@@ -778,6 +805,44 @@ async function saveResults(items) {
   document.getElementById('preview-area').querySelector('.btn-secondary').style.display = 'none';
 }
 
+function updateSelection() {
+  const cbs = document.querySelectorAll('.product-cb');
+  const checked = document.querySelectorAll('.product-cb:checked');
+  const bulkBar = document.getElementById('bulk-bar');
+  const selectAllCb = document.getElementById('select-all-cb');
+  const countEl = document.getElementById('selected-count');
+  bulkBar.style.display = checked.length > 0 ? 'flex' : 'none';
+  selectAllCb.checked = cbs.length > 0 && checked.length === cbs.length;
+  countEl.textContent = checked.length > 0 ? checked.length + ' selezionati' : '';
+}
+
+function toggleSelectAll(checked) {
+  document.querySelectorAll('.product-cb').forEach(cb => cb.checked = checked);
+  updateSelection();
+}
+
+function clearSelection() {
+  document.querySelectorAll('.product-cb').forEach(cb => cb.checked = false);
+  document.getElementById('select-all-cb').checked = false;
+  updateSelection();
+}
+
+async function deleteSelected() {
+  const checked = document.querySelectorAll('.product-cb:checked');
+  if (!checked.length) return;
+  if (!confirm('Eliminare ' + checked.length + ' prodotti selezionati?')) return;
+  const ids = Array.from(checked).map(cb => parseInt(cb.dataset.id));
+  try {
+    await db.from('prezzi').delete().in('id', ids);
+    allPrezzi = allPrezzi.filter(p => !ids.includes(p.id));
+    renderPrezzi();
+    updateStats();
+    showToast(ids.length + ' prodotti eliminati');
+  } catch(e) {
+    showToast('Errore eliminazione');
+  }
+}
+
 async function deleteProduct(id) {
   if (!confirm('Eliminare questo prodotto?')) return;
   try {
@@ -816,6 +881,7 @@ function renderPrezzi() {
       ${prods.map(p => `
         <div class="product-row">
           <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
+            <input type="checkbox" class="checkbox-product product-cb" data-id="${p.id}" onchange="updateSelection()">
             <div style="flex:1;">
               <div class="product-name">${p.prodotto}</div>
               <div class="product-meta">
