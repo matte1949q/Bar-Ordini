@@ -486,6 +486,42 @@
       text-transform: uppercase;
       letter-spacing: 0.05em;
     }
+
+    .product-prices-expand {
+      overflow: hidden;
+      max-height: 0;
+      transition: max-height 0.25s ease;
+    }
+    .product-prices-expand.open {
+      max-height: 80px;
+    }
+    .price-tags {
+      display: flex;
+      gap: 10px;
+      padding: 8px 0 4px;
+      border-top: 0.5px solid var(--border);
+      margin-top: 6px;
+    }
+    .price-tag {
+      flex: 1;
+      background: var(--bg3);
+      border-radius: var(--radius-sm);
+      padding: 6px 10px;
+      text-align: center;
+    }
+    .price-tag-label {
+      font-size: 10px;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 2px;
+    }
+    .price-tag-value {
+      font-family: 'DM Mono', monospace;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--accent);
+    }
   </style>
 <script>
 const APP_PASSWORD = 'furby2024';
@@ -1362,29 +1398,47 @@ function renderPrezzi() {
           <polyline points="6 9 12 15 18 9"/>
         </svg>
       </div>
-      ${isCollapsed ? '' : prods.map(p => `
+      ${isCollapsed ? '' : prods.map(p => {
+        const isVino = (p.categoria || 'distillati') === 'vini';
+        const tavolo = p.prezzo ? (p.prezzo * 1.22 * 2).toFixed(2) : '—';
+        const asporto = p.prezzo ? (p.prezzo * 1.22 * 1.5).toFixed(2) : '—';
+        return `
         <div class="product-row" 
           oncontextmenu="openCtxMenu(event,${p.id},'${p.prodotto.replace(/'/g,"\\'")}','${p.categoria||'distillati'}')"
           ontouchstart="longPressTimer=setTimeout(()=>openCtxMenu(event,${p.id},'${p.prodotto.replace(/'/g,"\\'")}','${p.categoria||'distillati'}'),600)"
           ontouchend="clearTimeout(longPressTimer)"
-          ontouchmove="clearTimeout(longPressTimer)">
+          ontouchmove="clearTimeout(longPressTimer)"
+          ${isVino ? `onclick="togglePriceExpand('expand-${p.id}')"` : ''}>
           <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
-            <input type="checkbox" class="checkbox-product product-cb" data-id="${p.id}" onchange="updateSelection()">
+            <input type="checkbox" class="checkbox-product product-cb" data-id="${p.id}" onchange="updateSelection()" onclick="event.stopPropagation()">
             <div style="flex:1;">
               <div class="product-name">${p.prodotto}</div>
               <div class="product-meta">
                 <span style="color:var(--text3);">${p.unita || ''} · ${p.updated_at ? new Date(p.updated_at).toLocaleDateString('it-IT') : ''}</span>
                 <span class="product-price">€${p.prezzo != null ? Number(p.prezzo).toFixed(2) : '—'}</span>
               </div>
+              ${isVino ? `
+              <div class="product-prices-expand" id="expand-${p.id}">
+                <div class="price-tags">
+                  <div class="price-tag">
+                    <div class="price-tag-label">Tavolo</div>
+                    <div class="price-tag-value">€${tavolo}</div>
+                  </div>
+                  <div class="price-tag">
+                    <div class="price-tag-label">Asporto</div>
+                    <div class="price-tag-value">€${asporto}</div>
+                  </div>
+                </div>
+              </div>` : ''}
             </div>
-            <button class="delete-btn" onclick="deleteProduct(${p.id})" title="Elimina">
+            <button class="delete-btn" onclick="event.stopPropagation();deleteProduct(${p.id})" title="Elimina">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                 <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/>
               </svg>
             </button>
           </div>
         </div>
-      `).join('')}
+      `}).join('')}
     </div>
   `}).join('');
 }
@@ -1440,6 +1494,12 @@ function renderStorico() {
       </div>
     `;
   }).join('');
+}
+
+function togglePriceExpand(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.toggle('open');
 }
 
 function toggleSupplier(fornitore) {
