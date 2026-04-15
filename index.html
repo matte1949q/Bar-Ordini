@@ -57,6 +57,7 @@
       position: sticky;
       top: 0;
       z-index: 10;
+      border-bottom: 0.5px solid var(--border);
     }
 
     .logo {
@@ -76,6 +77,7 @@
       position: sticky;
       top: 57px;
       z-index: 9;
+      isolation: isolate;
     }
 
     nav button {
@@ -715,6 +717,7 @@ let allPrezzi = [];
 let allStorico = [];
 let currentImageBase64 = null;
 let currentFilter = 'tutti';
+let collapsedSuppliers = new Set();
 let pdfPages = [];
 let currentImageMime = 'image/jpeg';
 
@@ -1348,10 +1351,18 @@ function renderPrezzi() {
     by[f].push(p);
   });
 
-  list.innerHTML = Object.entries(by).map(([fornitore, prods]) => `
+  list.innerHTML = Object.entries(by).map(([fornitore, prods]) => {
+    const isCollapsed = collapsedSuppliers.has(fornitore);
+    const safeF = fornitore.replace(/'/g, "\\'");
+    return `
     <div class="card" style="padding: 0 16px; margin-bottom:10px;">
-      <div style="padding:12px 0 8px;font-size:11px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--accent);border-bottom:0.5px solid var(--border);">${fornitore}</div>
-      ${prods.map(p => `
+      <div onclick="toggleSupplier('${safeF}')" style="padding:12px 0 8px;font-size:11px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--accent);border-bottom:${isCollapsed ? 'none' : '0.5px solid var(--border)'};cursor:pointer;display:flex;align-items:center;justify-content:space-between;">
+        <span>${fornitore} <span style="color:var(--text3);font-weight:400;">(${prods.length})</span></span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="transform:rotate(${isCollapsed ? '-90deg' : '0deg'});transition:transform 0.2s;flex-shrink:0;">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </div>
+      ${isCollapsed ? '' : prods.map(p => `
         <div class="product-row" 
           oncontextmenu="openCtxMenu(event,${p.id},'${p.prodotto.replace(/'/g,"\\'")}','${p.categoria||'distillati'}')"
           ontouchstart="longPressTimer=setTimeout(()=>openCtxMenu(event,${p.id},'${p.prodotto.replace(/'/g,"\\'")}','${p.categoria||'distillati'}'),600)"
@@ -1375,7 +1386,7 @@ function renderPrezzi() {
         </div>
       `).join('')}
     </div>
-  `).join('');
+  `}).join('');
 }
 
 async function deleteStorico(id) {
@@ -1429,6 +1440,15 @@ function renderStorico() {
       </div>
     `;
   }).join('');
+}
+
+function toggleSupplier(fornitore) {
+  if (collapsedSuppliers.has(fornitore)) {
+    collapsedSuppliers.delete(fornitore);
+  } else {
+    collapsedSuppliers.add(fornitore);
+  }
+  renderPrezzi();
 }
 
 function setFilter(f) {
